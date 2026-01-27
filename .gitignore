@@ -398,3 +398,4 @@ FodyWeavers.xsd
 *.sln.iml
 
 .containers
+/src/container/db/18/docker

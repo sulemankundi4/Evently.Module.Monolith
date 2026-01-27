@@ -20,4 +20,4 @@ if (app.Environment.IsDevelopment())
 
 EventsModule.MapEndpoints(app);
 
-app.Run();
+await app.RunAsync();

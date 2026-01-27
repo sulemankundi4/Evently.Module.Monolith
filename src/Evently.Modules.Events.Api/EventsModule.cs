@@ -18,7 +18,7 @@ public static class EventsModule
 
     public static IServiceCollection AddEventsModule(this IServiceCollection services, IConfiguration configuration)
     {
-        string databaseConnectionString = configuration.GetConnectionString("Database");
+        string databaseConnectionString = configuration.GetConnectionString("EventsDatabase");
 
         services.AddDbContext<EventsDbContext>(options =>
         {
