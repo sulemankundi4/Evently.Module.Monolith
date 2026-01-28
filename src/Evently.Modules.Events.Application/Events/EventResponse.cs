@@ -1,6 +1,7 @@
-﻿namespace Evently.Modules.Events.Api.Events;
+﻿namespace Evently.Modules.Events.Application.Events;
 
 internal sealed record EventResponse(
+    Guid Id,
     string Title,
     string Description,
     string Location,
