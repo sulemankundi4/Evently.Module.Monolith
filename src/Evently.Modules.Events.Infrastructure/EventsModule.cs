@@ -1,10 +1,18 @@
-﻿using Evently.Modules.Events.Api.Database;
+﻿using Evently.Modules.Events.Application.Abstractions.Clock;
 using Evently.Modules.Events.Application.Abstractions.Data;
+using Evently.Modules.Events.Domain.Categories;
 using Evently.Modules.Events.Domain.Events;
+using Evently.Modules.Events.Domain.TicketTypes;
+using Evently.Modules.Events.Infrastructure.Categories;
+using Evently.Modules.Events.Infrastructure.Clock;
 using Evently.Modules.Events.Infrastructure.Data;
 using Evently.Modules.Events.Infrastructure.Database;
 using Evently.Modules.Events.Infrastructure.Events;
+using Evently.Modules.Events.Infrastructure.TicketTypes;
+using Evently.Modules.Events.Presentation.Categories;
 using Evently.Modules.Events.Presentation.Events;
+using Evently.Modules.Events.Presentation.TicketTypes;
+using FluentValidation;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -20,6 +28,8 @@ public static class EventsModule
     public static void MapEndpoints(IEndpointRouteBuilder app)
     {
         EventEndpoints.MapEndpoints(app);
+        TicketTypeEndpoints.MapEndpoints(app);
+        CategoryEndpoints.MapEndpoints(app);
     }
 
     public static IServiceCollection AddEventsModule(this IServiceCollection services, IConfiguration configuration)
@@ -29,29 +39,38 @@ public static class EventsModule
             config.RegisterServicesFromAssemblies(Application.AssemblyReference.Assembly);
         });
 
+        services.AddValidatorsFromAssembly(Application.AssemblyReference.Assembly, includeInternalTypes: true);
+
         AddInfrastructure(services, configuration);
         return services;
     }
 
-    private static void AddInfrastructure(IServiceCollection serviceCollection, IConfiguration configuration1)
+    private static void AddInfrastructure(IServiceCollection services, IConfiguration configuration1)
     {
         string databaseConnectionString = configuration1.GetConnectionString("EventsDatabase");
 
         NpgsqlDataSource npgsqlDataSource = new NpgsqlDataSourceBuilder(databaseConnectionString).Build();
-        serviceCollection.TryAddSingleton(npgsqlDataSource);
 
+        services.TryAddSingleton(npgsqlDataSource);
 
-        serviceCollection.AddScoped<IDbConnectionFactory, DbConnectionFactory>();
+        services.AddScoped<IDbConnectionFactory, DbConnectionFactory>();
 
-        serviceCollection.AddDbContext<EventsDbContext>(options =>
+        services.TryAddSingleton<IDateTimeProvider, DateTimeProvider>();
+
+        services.AddDbContext<EventsDbContext>(options =>
         {
             options.UseNpgsql(databaseConnectionString, npgsqlOption =>
             {
                 npgsqlOption.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Events);
-            }).UseSnakeCaseNamingConvention();
+            }).UseSnakeCaseNamingConvention().AddInterceptors();
         });
 
-        serviceCollection.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<EventsDbContext>());
-        serviceCollection.AddScoped<IEventRepository, EventRepository>();
+        services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<EventsDbContext>());
+
+        services.AddScoped<IEventRepository, EventRepository>();
+
+        services.AddScoped<ITicketTypeRepository, TicketTypeRepository>();
+
+        services.AddScoped<ICategoryRepository, CategoryRepository>();
     }
 }
