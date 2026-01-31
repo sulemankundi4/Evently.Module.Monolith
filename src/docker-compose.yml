@@ -32,6 +32,16 @@ services:
       - evently-network
     restart: unless-stopped
 
+  evently.seq:
+    image: datalust/seq:latest
+    container_name: Evently.Seq
+    environment:
+    - ACCEPT_EULA=Y
+    - SEQ_FIRSTRUN_ADMINPASSWORD=LXdqAZh4c6rgurK
+    ports:
+    - 5341:5341
+    - 8081:80
+
 volumes:
   postgres_data:
     driver: local
