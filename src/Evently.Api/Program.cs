@@ -1,4 +1,5 @@
 using Evently.Api.Extensions;
+using Evently.Api.Middleware;
 using Evently.Common.Application;
 using Evently.Common.Infrastructure;
 using Evently.Modules.Events.Infrastructure;
@@ -8,12 +9,16 @@ WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
 builder.Host.UseSerilog((context, loggerConfig) => loggerConfig.ReadFrom.Configuration(context.Configuration));
 
+builder.Services.AddExceptionHandler<GlobalExceptionHandler>();
+
+builder.Services.AddProblemDetails();
+
 builder.Services.AddEndpointsApiExplorer();
+
 builder.Services.AddSwaggerGen(options =>
 {
     options.CustomSchemaIds(t => t.FullName?.Replace("+", "."));
 });
-
 
 builder.Services.AddApplication([Evently.Modules.Events.Application.AssemblyReference.Assembly]);
 
@@ -36,5 +41,7 @@ if (app.Environment.IsDevelopment())
 EventsModule.MapEndpoints(app);
 
 app.UseSerilogRequestLogging();
+
+app.UseExceptionHandler();
 
 await app.RunAsync();
