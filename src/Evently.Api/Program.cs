@@ -2,6 +2,7 @@ using Evently.Api.Extensions;
 using Evently.Api.Middleware;
 using Evently.Common.Application;
 using Evently.Common.Infrastructure;
+using Evently.Common.Presentation.Endpoints;
 using Evently.Modules.Events.Infrastructure;
 using Serilog;
 
@@ -22,7 +23,8 @@ builder.Services.AddSwaggerGen(options =>
 
 builder.Services.AddApplication([Evently.Modules.Events.Application.AssemblyReference.Assembly]);
 
-builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("EventsDatabase")!);
+builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("EventsDatabase")!,
+    builder.Configuration.GetConnectionString("Cache")!);
 
 builder.Configuration.AddModuleConfiguration(["events"]);
 
@@ -38,7 +40,7 @@ if (app.Environment.IsDevelopment())
     app.ApplyMigrations();
 }
 
-EventsModule.MapEndpoints(app);
+app.MapEndpoints();
 
 app.UseSerilogRequestLogging();
 
