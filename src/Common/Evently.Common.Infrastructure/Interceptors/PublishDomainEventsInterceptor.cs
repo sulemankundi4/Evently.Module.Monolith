@@ -22,7 +22,7 @@ public sealed class PublishDomainEventsInterceptor(IServiceScopeFactory serviceS
 
     private async Task PublishDomainEventsAsync(DbContext context, CancellationToken cancellationToken)
     {
-        var domainEvents = context
+        IEnumerable<IDomainEvent> domainEvents = context
             .ChangeTracker
             .Entries<Entity>()
             .Select(entry => entry.Entity)
