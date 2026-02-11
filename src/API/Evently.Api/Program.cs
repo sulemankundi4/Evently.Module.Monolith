@@ -29,6 +29,7 @@ builder.Services.AddApplication([
     Evently.Modules.Ticketing.Application.AssemblyReference.Assembly]);
 
 builder.Services.AddInfrastructure(builder.Configuration.GetConnectionString("EventsDatabase")!,
+    [TicketingModule.ConfigureConsumers],
     builder.Configuration.GetConnectionString("Cache")!);
 
 builder.Configuration.AddModuleConfiguration(["events", "users", "ticketing"]);
@@ -37,7 +38,7 @@ builder.Services.AddEventsModule(builder.Configuration);
 
 builder.Services.AddUsersModule(builder.Configuration);
 
-builder.Services.AddTicketingModule();
+builder.Services.AddTicketingModule(builder.Configuration);
 
 WebApplication app = builder.Build();
 
