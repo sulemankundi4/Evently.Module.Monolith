@@ -16,19 +16,28 @@ internal sealed class RequestLoggingPipelineBehavior<TRequest, TResponse>(ILogge
 
         using (LogContext.PushProperty("Module", moduleName))
         {
-            logger.LogInformation("Processing request {RequestName}", requestName);
+            if (logger.IsEnabled(LogLevel.Information))
+            {
+                logger.LogInformation("Processing request {RequestName}", requestName);
+            }
 
             TResponse result = await next(cancellationToken);
 
             if (result.IsSuccess)
             {
-                logger.LogInformation("Completed request {RequestName}", requestName);
+                if (logger.IsEnabled(LogLevel.Information))
+                {
+                    logger.LogInformation("Completed request {RequestName}", requestName);
+                }
             }
             else
             {
                 using (LogContext.PushProperty("Error", result.Error, true))
                 {
-                    logger.LogError("Completed request {RequestName} with error", requestName);
+                    if (logger.IsEnabled(LogLevel.Error))
+                    {
+                        logger.LogError("Completed request {RequestName} with error", requestName);
+                    }
                 }
             }
 

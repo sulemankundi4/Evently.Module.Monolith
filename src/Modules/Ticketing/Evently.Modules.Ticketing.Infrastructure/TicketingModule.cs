@@ -1,10 +1,20 @@
 ﻿using Evently.Common.Application.Data;
 using Evently.Common.Infrastructure.Interceptors;
 using Evently.Common.Presentation.Endpoints;
+using Evently.Modules.Ticketing.Application.Abstractions.Data;
+using Evently.Modules.Ticketing.Application.Abstractions.Payments;
 using Evently.Modules.Ticketing.Application.Carts;
 using Evently.Modules.Ticketing.Domain.Customers;
+using Evently.Modules.Ticketing.Domain.Events;
+using Evently.Modules.Ticketing.Domain.Orders;
+using Evently.Modules.Ticketing.Domain.Payments;
+using Evently.Modules.Ticketing.Domain.Tickets;
 using Evently.Modules.Ticketing.Infrastructure.Customers;
 using Evently.Modules.Ticketing.Infrastructure.Database;
+using Evently.Modules.Ticketing.Infrastructure.Events;
+using Evently.Modules.Ticketing.Infrastructure.Orders;
+using Evently.Modules.Ticketing.Infrastructure.Payments;
+using Evently.Modules.Ticketing.Infrastructure.Tickets;
 using Evently.Modules.Ticketing.Presentation.Consumers;
 using MassTransit;
 using Microsoft.EntityFrameworkCore;
@@ -16,7 +26,9 @@ namespace Evently.Modules.Ticketing.Infrastructure;
 
 public static class TicketingModule
 {
-    public static IServiceCollection AddTicketingModule(this IServiceCollection services, IConfiguration configuration)
+    public static IServiceCollection AddTicketingModule(
+        this IServiceCollection services,
+        IConfiguration configuration)
     {
         services.AddInfrastructure(configuration);
 
@@ -32,21 +44,25 @@ public static class TicketingModule
 
     private static void AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
     {
-
-        string databaseConnectionString = configuration.GetConnectionString("EventsDatabase");
-
         services.AddDbContext<TicketingDbContext>((sp, options) =>
-        {
-            options.UseNpgsql(databaseConnectionString, npgsqlOption =>
-            {
-                npgsqlOption.MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Ticketing);
-            }).UseSnakeCaseNamingConvention().AddInterceptors(sp.GetRequiredService<PublishDomainEventsInterceptor>());
-        });
-
-        services.AddScoped<IUnitOfWork>(provider => provider.GetRequiredService<TicketingDbContext>());
-
-        services.AddSingleton<CartService>();
+            options
+                .UseNpgsql(
+                    configuration.GetConnectionString("EventsDatabase"),
+                    npgsqlOptions => npgsqlOptions
+                        .MigrationsHistoryTable(HistoryRepository.DefaultTableName, Schemas.Ticketing))
+                .AddInterceptors(sp.GetRequiredService<PublishDomainEventsInterceptor>())
+                .UseSnakeCaseNamingConvention());
 
         services.AddScoped<ICustomerRepository, CustomerRepository>();
+        services.AddScoped<IEventRepository, EventRepository>();
+        services.AddScoped<ITicketTypeRepository, TicketTypeRepository>();
+        services.AddScoped<IOrderRepository, OrderRepository>();
+        services.AddScoped<ITicketRepository, TicketRepository>();
+        services.AddScoped<IPaymentRepository, PaymentRepository>();
+
+        services.AddScoped<IUnitOfWork>(sp => sp.GetRequiredService<TicketingDbContext>());
+
+        services.AddSingleton<CartService>();
+        services.AddSingleton<IPaymentService, PaymentService>();
     }
 }
